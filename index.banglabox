@@ -1,0 +1,2478 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud TV </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/header.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e50914;
+            --secondary-color: #141414;
+            --text-color: #ffffff;
+            --hover-color: #ff161d;
+        }
+
+        body {
+            background-color: var(--secondary-color);
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .category-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1.5rem;
+            padding-left: 1.25rem;
+            border-left: 4px solid var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .category-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary-color), transparent);
+            margin-left: 1rem;
+        }
+
+        /* Add a subtle glow effect to category titles */
+        .category-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: var(--primary-color);
+            box-shadow: 0 0 15px 2px var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .channel-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            aspect-ratio: 16/9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .channel-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+            z-index: 1;
+        }
+
+        .channel-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: rgba(20, 20, 20, 0.7);
+            padding: 10px;
+            
+            /* Disable all transitions and animations */
+            transition: none !important;
+            animation: none !important;
+            
+            /* Disable all transformations */
+            transform: none !important;
+            
+            /* Disable all filters and effects */
+            filter: none !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+            
+            /* Prevent browser-specific rendering optimizations */
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: none;
+            
+            /* Force hardware acceleration but prevent any visual changes */
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            
+            /* Ensure consistent rendering */
+            image-rendering: auto;
+        }
+
+        /* Ensure no hover effects change the image */
+        .channel-card:hover img,
+        .channel-card:focus img,
+        .channel-card:active img {
+            /* Reinforce all the same properties on hover/focus/active states */
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+            filter: none !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+            background-color: rgba(20, 20, 20, 0.7) !important;
+        }
+
+        /* Disable any loading animations for images */
+        .channel-card img.loading {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+
+        .channel-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            padding: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .channel-card:hover .channel-overlay {
+            opacity: 1;
+        }
+
+        .channel-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--primary-color);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(229, 9, 20, 0.5);
+        }
+
+        .channel-card:hover .play-button {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .play-button i {
+            font-size: 1.5rem;
+            margin-left: 4px;
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            position: relative;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-input {
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50px;
+            padding: 0.6rem 1.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            opacity: 1;
+        }
+
+        .search-input:focus {
+            background-color: rgba(255, 255, 255, 0.12);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+        }
+
+        /* Add a search icon */
+        .search-container::after {
+            content: '\f002';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            pointer-events: none;
+            font-size: 1rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .navbar {
+                background: rgba(20, 20, 20, 0.98);
+                backdrop-filter: blur(10px);
+                padding: 0.75rem 0;
+            }
+
+            .navbar-brand img {
+                height: 35px;
+                transition: transform 0.3s ease;
+            }
+
+            .navbar-brand img:hover {
+                transform: scale(1.05);
+            }
+
+            .channel-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 1rem;
+                padding: 0.75rem;
+            }
+
+            .channel-card {
+                border-radius: 12px;
+            }
+
+            .channel-overlay {
+                padding: 1rem;
+                opacity: 1;
+                background: linear-gradient(transparent, rgba(0, 0, 0, 0.95));
+            }
+
+            .channel-name {
+                font-size: 0.9rem;
+                line-height: 1.3;
+            }
+
+            .category-title {
+                font-size: 1.25rem;
+                margin: 1.5rem 0 1rem;
+                padding-left: 1rem;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        .category-section {
+            scroll-margin-top: 80px;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Stagger the animations for each category */
+        .category-section:nth-child(2) { animation-delay: 0.1s; }
+        .category-section:nth-child(3) { animation-delay: 0.2s; }
+        .category-section:nth-child(4) { animation-delay: 0.3s; }
+        .category-section:nth-child(5) { animation-delay: 0.4s; }
+
+        /* Enhance channel card hover effects */
+        .channel-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            aspect-ratio: 16/9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .channel-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+            z-index: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .see-more-btn {
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .see-more-btn:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+        }
+
+        .see-more-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Add loading animation for images */
+        .channel-card img.loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.6; }
+        }
+
+        /* Add styles for upcoming and live events */
+        .events-section {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .event-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            aspect-ratio: 16/9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-color);
+        }
+        
+        .event-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: rgba(20, 20, 20, 0.7);
+            padding: 10px;
+            
+            /* Disable all transitions and animations */
+            transition: none !important;
+            animation: none !important;
+            transform: none !important;
+            filter: none !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: none;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: auto;
+        }
+        
+        .event-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            padding: 1.5rem;
+            color: white;
+        }
+        
+        .event-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .event-time {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .countdown {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(229, 9, 20, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .live-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(229, 9, 20, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .events-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1.5rem;
+            padding-left: 1.25rem;
+            border-left: 4px solid var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+        
+        .events-title::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary-color), transparent);
+            margin-left: 1rem;
+        }
+        
+        .events-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background-color: var(--primary-color);
+            box-shadow: 0 0 15px 2px var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+    </style>
+    <!-- Logo and Favicon -->
+    <link rel="icon" href="assets/logos/Cloudtv.png">
+    <link rel="apple-touch-icon" href="assets/logos/Cloudtv.png">
+    <meta name="msapplication-TileImage" content="assets/logos/Cloudtv.png">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon and Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="57x57" href="assets/logos/logo_57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="assets/logos/logo_60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="assets/logos/logo_72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="assets/logos/logo_76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="assets/logos/logo_114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="assets/logos/logo_120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="assets/logos/logo_144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/logos/logo_152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/logos/logo_180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/logos/logo_192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logos/logo_32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/logos/logo_96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/logos/logo_16x16.png">
+</head>
+<body>
+    <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="index.php">
+            <img src="https://www.appcreator24.com/srv/imgs/gen/3667372_icohome.png?ts=1753506009" alt="Cloudtv" height="40">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Desktop Navigation -->
+            <ul class="navbar-nav ms-auto desktop-nav">
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Bangladeshi">
+                        Bangladeshi                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#CloudTV">
+                        CloudTV                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#English">
+                        English                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Foreign">
+                        Foreign                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Hindi">
+                        Hindi                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Indian-Bangla">
+                        Indian Bangla                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Infotainment">
+                        Infotainment                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Kids">
+                        Kids                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Music">
+                        Music                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#News">
+                        News                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Religious">
+                        Religious                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Sports">
+                        Sports                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#testbd">
+                        testbd                    </a>
+                </li>
+                            </ul>
+
+            <!-- Mobile Navigation -->
+            <ul class="navbar-nav ms-auto mobile-nav">
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Bangladeshi">
+                        Bangladeshi                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#CloudTV">
+                        CloudTV                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#English">
+                        English                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Foreign">
+                        Foreign                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Hindi">
+                        Hindi                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Indian-Bangla">
+                        Indian Bangla                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Infotainment">
+                        Infotainment                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Kids">
+                        Kids                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Music">
+                        Music                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#News">
+                        News                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Religious">
+                        Religious                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#Sports">
+                        Sports                    </a>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="index.php#testbd">
+                        testbd                    </a>
+                </li>
+                            </ul>
+        </div>
+    </div>
+</nav>
+
+ 
+    <div class="container mt-5 pt-4">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="form-control search-input" placeholder="Search Channels" aria-label="Search channels">
+        </div>
+        
+        <div id="channelsContainer">
+            <!-- Live Events Section -->
+                        
+			
+            <!-- Notice Marquee -->
+            <marquee scrollamount="5">
+              <a class="honoursApply" 
+                 href="download.php?type=mobile&channelId=1753125561195" 
+                 target="_blank" 
+                 style="color: #FFEB7; font-size: 24px; font-weight: bold; text-decoration: none;">
+                 
+                স্মার্ট টিভি, এন্ড্রয়েড টিভি এবং অ্যান্ড্রয়েড ফোনে সকল চ্যানেল দেখতে ডাউনলোড করুন (BANGLA BOX TV APP)
+            </marquee>
+
+		
+		
+            <!-- Upcoming Events Section -->
+                        
+            <!-- Regular Categories -->
+                        <div class="category-section mb-4" data-group="Bangladeshi" id="Bangladeshi">
+                <h2 class="category-title">Bangladeshi</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743017681682" 
+                       class="channel-card text-decoration-none">
+                        <img src="https://tse3.mm.bing.net/th/id/OIP.0wqgCXG0lY_BH00lh6geNwHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" 
+                             alt="BTV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">BTV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/maasranga.png" 
+                             alt="Maasranga"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Maasranga</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743018479488" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/channeli.png" 
+                             alt="Channel I"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Channel I</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743542150784" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/banglatv.png" 
+                             alt="Bangla TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Bangla TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743542373826" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/banglavision.png" 
+                             alt="Bangla Vision"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Bangla Vision</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743542663768" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/bijoytv.png" 
+                             alt="Bijoy TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Bijoy TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743545282943" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/channel9.png" 
+                             alt="Channel 9"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Channel 9</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743545848935" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/deepto.png" 
+                             alt="Deepto"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Deepto</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743546111567" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/deshtv.png" 
+                             alt="Desh TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Desh TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743546371751" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/duronto.png" 
+                             alt="Duronto"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Duronto</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743546888991" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/ekusheytv.png" 
+                             alt="Ekushey TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Ekushey TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743548677072" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/independent.png" 
+                             alt="Independent"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Independent</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743550196812" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/news24.png" 
+                             alt="News 24"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">News 24</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743550329181" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/nexustelevision.png" 
+                             alt="Nexus Television"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Nexus Television</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743551064875" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/rtv.png" 
+                             alt="RTV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">RTV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743552070126" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/ntv.png" 
+                             alt="NTV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">NTV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743553215693" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/atnbangla.png" 
+                             alt="ATN Bangla"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">ATN Bangla</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743553255361" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/boishakhitv.png" 
+                             alt="Boishakhi TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Boishakhi TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743553499259" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/channel24.png" 
+                             alt="Channel 24"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Channel 24</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743553628830" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/asian.png" 
+                             alt="Asian"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Asian</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                                <div class="text-center mt-3">
+                    <button class="btn btn-outline-light see-more-btn" 
+                            onclick="loadMoreChannels('Bangladeshi')"
+                            data-category="Bangladeshi">
+                        See More
+                    </button>
+                </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="CloudTV" id="CloudTV">
+                <h2 class="category-title">CloudTV</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1749557720333" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tsports.png" 
+                             alt="T Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">T Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1750694282730" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten5.png" 
+                             alt="Sony Sports Ten 5"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 5</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1750694363017" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsports1.png" 
+                             alt="Star Sports 1"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports 1</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743010891723" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/asports.png" 
+                             alt="A Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">A Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1753033338939" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/willow2.png" 
+                             alt="Willow 2"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Willow 2</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="English" id="English">
+                <h2 class="category-title">English</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743548479753" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/foxactionmovies.png" 
+                             alt="FOX Action Movies"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">FOX Action Movies</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744772967849" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starmovies.png" 
+                             alt="Star Movies"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Movies</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744773002365" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonypix.png" 
+                             alt="Sony Pix"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Pix</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Foreign" id="Foreign">
+                <h2 class="category-title">Foreign</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743540455154" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/arirang.png" 
+                             alt="Arirang"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Arirang</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743549175928" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/lotusmacau.png" 
+                             alt="Lotus Macau"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Lotus Macau</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745118544636" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/humtv.png" 
+                             alt="Hum TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Hum TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745118586484" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/hummasala.png" 
+                             alt="Hum Masala"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Hum Masala</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745118620733" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/humsitaray.png" 
+                             alt="Hum Sitaray"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Hum Sitaray</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Hindi" id="Hindi">
+                <h2 class="category-title">Hindi</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1744663941983" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starplus.png" 
+                             alt="Star Plus"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Plus</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743551774539" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/zeetv.png" 
+                             alt="Zee  TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Zee  TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664018367" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonyentertainmenttelevision.png" 
+                             alt="Sony Entertainment Television"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Entertainment Television</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664050488" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/colors.png" 
+                             alt="Colors"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Colors</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664069401" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/andtv.png" 
+                             alt="&amp; TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">&amp; TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664115724" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/stargold.png" 
+                             alt="Star Gold"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Gold</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743551812597" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/zeecinema.png" 
+                             alt="Zee Cinema"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Zee Cinema</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664182801" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonymax.png" 
+                             alt="Sony Max"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Max</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744664205283" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/andpictures.png" 
+                             alt="&amp; Pictures"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">&amp; Pictures</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745119246399" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysab.png" 
+                             alt="Sony SAB"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony SAB</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745119941130" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/b4umovies.png" 
+                             alt="B4U Movies"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">B4U Movies</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745120121718" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonymax2.png" 
+                             alt="Sony Max 2"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Max 2</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Indian Bangla" id="Indian-Bangla">
+                <h2 class="category-title">Indian Bangla</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=174328954722" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/zeebangla.png" 
+                             alt="Zee Bangla"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Zee Bangla</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744662256048" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonyaath.png" 
+                             alt="Sony Aath"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Aath</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744662418727" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/colorsbangla.png" 
+                             alt="Colors Bangla"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Colors Bangla</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744662448484" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/jalshamovies.png" 
+                             alt="Jalsha Movies"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Jalsha Movies</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744662526474" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/zeebanglacinema.png" 
+                             alt="Zee Bangla Cinema"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Zee Bangla Cinema</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=174328513220" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starjalsha.png" 
+                             alt="Star Jalsha"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Jalsha</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Infotainment" id="Infotainment">
+                <h2 class="category-title">Infotainment</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743541864551" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/bbclifestyle.png" 
+                             alt="BBC Lifestyle"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">BBC Lifestyle</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744771842367" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/discovery.png" 
+                             alt="Discovery"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Discovery</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744772014540" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/natgeowild.png" 
+                             alt="Nat Geo Wild"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Nat Geo Wild</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144466579" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tlc.png" 
+                             alt="TLC"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">TLC</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144496905" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/animalplanet.png" 
+                             alt="Animal Planet"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Animal Planet</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144517000" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonybbcearth.png" 
+                             alt="Sony BBC Earth"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony BBC Earth</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144550567" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/discoveryscience.png" 
+                             alt="Discovery Science"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Discovery Science</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144571388" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/discoveryturbo.png" 
+                             alt="Discovery Turbo"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Discovery Turbo</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745144594406" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/investigationdiscovery.png" 
+                             alt="Investigation Discovery"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Investigation Discovery</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Kids" id="Kids">
+                <h2 class="category-title">Kids</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743544469094" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/cbeebiesbbc.png" 
+                             alt="CBeebies BBC"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">CBeebies BBC</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744771588117" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/hungama.png" 
+                             alt="Hungama"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Hungama</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744771612218" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/nickjr.png" 
+                             alt="Nick Jr."
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Nick Jr.</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744775615859" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/cartoonnetwork.png" 
+                             alt="Cartoon Network"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Cartoon Network</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744775476597" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/cartoonnetworkhdplus.png" 
+                             alt="Cartoon Network HD+"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Cartoon Network HD+</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745117412375" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/pogo.png" 
+                             alt="Pogo"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Pogo</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745117673331" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/discoverykids.png" 
+                             alt="Discovery Kids"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Discovery Kids</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1745117714452" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonyyay.png" 
+                             alt="Sony YAY"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony YAY</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Music" id="Music">
+                <h2 class="category-title">Music</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1744773856821" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/b4umusic.png" 
+                             alt="B4U Music"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">B4U Music</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744773886327" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/9xjalwa.png" 
+                             alt="9x Jalwa"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">9x Jalwa</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="News" id="News">
+                <h2 class="category-title">News</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743544977514" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/cgtn.png" 
+                             alt="CGTN"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">CGTN</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743545138036" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/cnn.png" 
+                             alt="CNN"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">CNN</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743549742386" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/nhkworldjapan.png" 
+                             alt="NHK World Japan"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">NHK World Japan</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744773377210" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/deutschewelle.png" 
+                             alt="Deutsche Welle"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Deutsche Welle</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Religious" id="Religious">
+                <h2 class="category-title">Religious</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743550752114" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/saudiqurantv.png" 
+                             alt="Saudi Quraan TV"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Saudi Quraan TV</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="Sports" id="Sports">
+                <h2 class="category-title">Sports</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1743086176641" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tsports.png" 
+                             alt="T Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">T Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743098626999" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsports1.png" 
+                             alt="Star Sports 1"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports 1</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743099075078" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsports2.png" 
+                             alt="Star Sports 2"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports 2</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743100377651" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsports3.png" 
+                             alt="Star Sports 3"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports 3</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743100898825" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsportsselect1.png" 
+                             alt="Star Sports Select 1"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports Select 1</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743100955769" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/starsportsselect2.png" 
+                             alt="Star Sports Select 2 "
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Star Sports Select 2 </h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743281092131" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten1.png" 
+                             alt="Sony Sports Ten 1"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 1</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743281340957" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten2.png" 
+                             alt="Sony Sports Ten 2"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 2</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743281381389" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten3.png" 
+                             alt="Sony Sports Ten 3"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 3</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743281501175" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten4.png" 
+                             alt="Sony Sports Ten 4"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 4</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743281540455" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/sonysportsten5.png" 
+                             alt="Sony Sports Ten 5"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Sony Sports Ten 5</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743555343987" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/asports.png" 
+                             alt="A Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">A Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743555756615" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/ptvsports.png" 
+                             alt="PTV Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">PTV Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743555922161" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/foxsports.png" 
+                             alt="Fox Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Fox Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743556231511" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tntsports.png" 
+                             alt="TNT Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">TNT Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743556724229" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/espn.png" 
+                             alt="ESPN"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">ESPN</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1743556749975" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tsn.png" 
+                             alt="TSN"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">TSN</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744013031560" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/eurosport.png" 
+                             alt="Eurosport"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Eurosport</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1744775202401" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/tencricket.png" 
+                             alt="Ten Cricket"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Ten Cricket</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                        <a href="play.php?id=1752456598095" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/fastsports.png" 
+                             alt="Fast Sports"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">Fast Sports</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                                <div class="text-center mt-3">
+                    <button class="btn btn-outline-light see-more-btn" 
+                            onclick="loadMoreChannels('Sports')"
+                            data-category="Sports">
+                        See More
+                    </button>
+                </div>
+                            </div>
+                        <div class="category-section mb-4" data-group="testbd" id="testbd">
+                <h2 class="category-title">testbd</h2>
+                <div class="channel-grid">
+                                        <a href="play.php?id=1753110240311" 
+                       class="channel-card text-decoration-none">
+                        <img src="http://172.19.178.178/tv/img/jamunatv.png" 
+                             alt="test"
+                             onerror="this.src='assets/default-channel.png'"
+                             class="loading">
+                        <div class="channel-overlay">
+                            <h3 class="channel-name">test</h3>
+                        </div>
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </a>
+                                    </div>
+                            </div>
+                    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    const allChannels = [{"channelId":"1743017681682","channelName":"GTV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/gtv.png","sourceType":"Flussonic","active":true,"serverId":"67e456c5ae421","streamName":"gtv"},{"channelId":"1743017958008","channelName":"Maasranga","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/maasranga.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"maasranga","active":true},{"channelId":"1743018479488","channelName":"Channel I","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/channeli.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"channeli","active":true},{"channelId":"1743086176641","channelName":"T Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/tsports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"tsports","active":true},{"channelId":"1743098626999","channelName":"Star Sports 1","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/starsports1.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"starsports1"},{"channelId":"1743099075078","channelName":"Star Sports 2","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/starsports2.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"starsports2"},{"channelId":"1743100377651","channelName":"Star Sports 3","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/starsports3.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"starsports3"},{"channelId":"1743100898825","channelName":"Star Sports Select 1","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/starsportsselect1.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"starsportsselect1"},{"channelId":"1743540455154","channelName":"Arirang","groupName":"Foreign","logo":"http:\/\/172.19.178.178\/tv\/img\/arirang.png","sourceType":"Flussonic","serverId":"67ec50dd96550","streamName":"arirang","active":true},{"channelId":"1743100955769","channelName":"Star Sports Select 2 ","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/starsportsselect2.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"starsportsselect2"},{"channelId":"174328954722","channelName":"Zee Bangla","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/zeebangla.png","sourceType":"Flussonic","active":true,"serverId":"67e87b6509828","streamName":"zeebangla"},{"channelId":"1743281092131","channelName":"Sony Sports Ten 1","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten1.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"sonysportsten1"},{"channelId":"1743281340957","channelName":"Sony Sports Ten 2","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten2.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"sonysportsten2"},{"channelId":"1743281381389","channelName":"Sony Sports Ten 3","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten3.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"sonysportsten3"},{"channelId":"1743281501175","channelName":"Sony Sports Ten 4","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten4.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"sonysportsten4"},{"channelId":"1743281540455","channelName":"Sony Sports Ten 5","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten5.png","sourceType":"Flussonic","active":true,"serverId":"67e56025c2d4c","streamName":"sonysportsten5"},{"channelId":"1743542150784","channelName":"Bangla TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/banglatv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"banglatv","active":true},{"channelId":"1743541864551","channelName":"BBC Lifestyle","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/bbclifestyle.png","sourceType":"Flussonic","active":true,"serverId":"67ec53c1b4472","streamName":"bbclifestyle"},{"channelId":"1743542373826","channelName":"Bangla Vision","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/banglavision.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"banglavision","active":true},{"channelId":"1743542663768","channelName":"Bijoy TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/bijoytv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"bijoytv","active":true},{"channelId":"1743544469094","channelName":"CBeebies BBC","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/cbeebiesbbc.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"cbeebiesbbc","active":true},{"channelId":"1743544977514","channelName":"CGTN","groupName":"News","logo":"http:\/\/172.19.178.178\/tv\/img\/cgtn.png","sourceType":"Flussonic","serverId":"67ec626be9b4e","streamName":"cgtn","active":true},{"channelId":"1743545138036","channelName":"CNN","groupName":"News","logo":"http:\/\/172.19.178.178\/tv\/img\/cnn.png","sourceType":"Flussonic","serverId":"67ec626be9b4e","streamName":"cnn","active":true},{"channelId":"1743545282943","channelName":"Channel 9","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/channel9.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"channel9","active":true},{"channelId":"1743545848935","channelName":"Deepto","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/deepto.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"deepto","active":true},{"channelId":"1743546111567","channelName":"Desh TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/deshtv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"deshtv","active":true},{"channelId":"1743546371751","channelName":"Duronto","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/duronto.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"duronto","active":true},{"channelId":"1743546888991","channelName":"Ekushey TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/ekusheytv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"ekusheytv","active":true},{"channelId":"1743548479753","channelName":"FOX Action Movies","groupName":"English","logo":"http:\/\/172.19.178.178\/tv\/img\/foxactionmovies.png","sourceType":"Flussonic","serverId":"67ec6c834ac4f","streamName":"foxactionmovies","active":true},{"channelId":"1743548677072","channelName":"Independent","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/independent.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"independent","active":true},{"channelId":"1743549175928","channelName":"Lotus Macau","groupName":"Foreign","logo":"http:\/\/172.19.178.178\/tv\/img\/lotusmacau.png","sourceType":"Flussonic","serverId":"67ec50dd96550","streamName":"lotusmacau","active":true},{"channelId":"1743549742386","channelName":"NHK World Japan","groupName":"News","logo":"http:\/\/172.19.178.178\/tv\/img\/nhkworldjapan.png","sourceType":"Flussonic","serverId":"67ec626be9b4e","streamName":"nhkworldjapan","active":true},{"channelId":"1743550196812","channelName":"News 24","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/news24.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"news24","active":true},{"channelId":"1743550329181","channelName":"Nexus Television","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/nexustelevision.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"nexustelevision","active":true},{"channelId":"1743550752114","channelName":"Saudi Quraan TV","groupName":"Religious","logo":"http:\/\/172.19.178.178\/tv\/img\/saudiqurantv.png","sourceType":"Flussonic","active":true,"serverId":"67ec78c95d2b8","streamName":"saudiqurantv"},{"channelId":"1743551064875","channelName":"RTV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/rtv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"rtv","active":true},{"channelId":"1743552070126","channelName":"NTV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/ntv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"ntv","active":true},{"channelId":"1743553215693","channelName":"ATN Bangla","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/atnbangla.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"atnbangla","active":true},{"channelId":"1743553255361","channelName":"Boishakhi TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/boishakhitv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"boishakhitv","active":true},{"channelId":"1743553499259","channelName":"Channel 24","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/channel24.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"channel24","active":true},{"channelId":"1743553628830","channelName":"Asian","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/asian.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"asian","active":true},{"channelId":"1743553876644","channelName":"SA TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/satv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"satv","active":true},{"channelId":"1743554022213","channelName":"DBC","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/dbc.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"dbc","active":true},{"channelId":"1743554160090","channelName":"Ekhon","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/ekhon.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"ekhon","active":true},{"channelId":"1743554442703","channelName":"71","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/71.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"71","active":true},{"channelId":"1743554633424","channelName":"Mohona TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/mohonatv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"mohonatv","active":true},{"channelId":"1743554809292","channelName":"Global Television","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/globaltelevision.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"globaltelevision","active":true},{"channelId":"1743554926099","channelName":"My TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/mytv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"mytv","active":true},{"channelId":"1743555141100","channelName":"Ananda TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/anandatv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"anandatv","active":true},{"channelId":"1743555343987","channelName":"A Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/asports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"asports","active":true},{"channelId":"1743555756615","channelName":"PTV Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/ptvsports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"ptvsports","active":true},{"channelId":"1743555922161","channelName":"Fox Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/foxsports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"foxsports","active":true},{"channelId":"1743556231511","channelName":"TNT Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/tntsports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"tntsports","active":true},{"channelId":"1743556724229","channelName":"ESPN","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/espn.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"espn","active":true},{"channelId":"1743556749975","channelName":"TSN","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/tsn.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"tsn","active":true},{"channelId":"1743663429051","channelName":"ATN News","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/atnnews.png","sourceType":"Flussonic","active":true,"serverId":"67e456c5ae421","streamName":"atnnews"},{"channelId":"1743663495299","channelName":"Movie Bangla","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/moviebangla.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"moviebangla","active":true},{"channelId":"1744013031560","channelName":"Eurosport","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/eurosport.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"eurosport","active":true},{"channelId":"1744662256048","channelName":"Sony Aath","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/sonyaath.png","sourceType":"Flussonic","serverId":"67e87b6509828","streamName":"sonyaath","active":true},{"channelId":"1744662418727","channelName":"Colors Bangla","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/colorsbangla.png","sourceType":"Flussonic","serverId":"67e87b6509828","streamName":"colorsbangla","active":true},{"channelId":"1744662448484","channelName":"Jalsha Movies","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/jalshamovies.png","sourceType":"Flussonic","serverId":"67e87b6509828","streamName":"jalshamovies","active":true},{"channelId":"1744662526474","channelName":"Zee Bangla Cinema","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/zeebanglacinema.png","sourceType":"Flussonic","serverId":"67e87b6509828","streamName":"zeebanglacinema","active":true},{"channelId":"1744663941983","channelName":"Star Plus","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/starplus.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"starplus","active":true},{"channelId":"1743551774539","channelName":"Zee  TV","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/zeetv.png","sourceType":"Flussonic","active":true,"serverId":"67ec7c69036c5","streamName":"zeetv"},{"channelId":"1744664018367","channelName":"Sony Entertainment Television","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/sonyentertainmenttelevision.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"sonyentertainmenttelevision","active":true},{"channelId":"1744664050488","channelName":"Colors","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/colors.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"colors","active":true},{"channelId":"1744664069401","channelName":"& TV","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/andtv.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"andtv","active":true},{"channelId":"1744664115724","channelName":"Star Gold","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/stargold.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"stargold","active":true},{"channelId":"1743551812597","channelName":"Zee Cinema","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/zeecinema.png","sourceType":"Flussonic","active":true,"serverId":"67ec7c69036c5","streamName":"zeecinema"},{"channelId":"1744664182801","channelName":"Sony Max","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/sonymax.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"sonymax","active":true},{"channelId":"1744664205283","channelName":"& Pictures","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/andpictures.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"andpictures","active":true},{"channelId":"1744771588117","channelName":"Hungama","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/hungama.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"hungama","active":true},{"channelId":"1744771612218","channelName":"Nick Jr.","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/nickjr.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"nickjr","active":true},{"channelId":"1744771842367","channelName":"Discovery","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/discovery.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"discovery","active":true},{"channelId":"1744772014540","channelName":"Nat Geo Wild","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/natgeowild.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"natgeowild","active":true},{"channelId":"1744772967849","channelName":"Star Movies","groupName":"English","logo":"http:\/\/172.19.178.178\/tv\/img\/starmovies.png","sourceType":"Flussonic","serverId":"67ec6c834ac4f","streamName":"starmovies","active":true},{"channelId":"1744773002365","channelName":"Sony Pix","groupName":"English","logo":"http:\/\/172.19.178.178\/tv\/img\/sonypix.png","sourceType":"Flussonic","serverId":"67ec6c834ac4f","streamName":"sonypix","active":true},{"channelId":"1744773377210","channelName":"Deutsche Welle","groupName":"News","logo":"http:\/\/172.19.178.178\/tv\/img\/deutschewelle.png","sourceType":"Flussonic","serverId":"67ec626be9b4e","streamName":"deutschewelle","active":true},{"channelId":"1744773856821","channelName":"B4U Music","groupName":"Music","logo":"http:\/\/172.19.178.178\/tv\/img\/b4umusic.png","sourceType":"Flussonic","serverId":"67ec78c95d2b8","streamName":"b4umusic","active":true},{"channelId":"1744775202401","channelName":"Ten Cricket","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/tencricket.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"tencricket","active":true},{"channelId":"1744775615859","channelName":"Cartoon Network","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/cartoonnetwork.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"cartoonnetwork","active":true},{"channelId":"1744775476597","channelName":"Cartoon Network HD+","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/cartoonnetworkhdplus.png","sourceType":"Flussonic","active":true,"serverId":"67ec6052b2a40","streamName":"cartoonnetworkhdplus"},{"channelId":"1744773886327","channelName":"9x Jalwa","groupName":"Music","logo":"http:\/\/172.19.178.178\/tv\/img\/9xjalwa.png","sourceType":"Flussonic","active":true,"serverId":"67ec78c95d2b8","streamName":"9xjalwa"},{"channelId":"1745117412375","channelName":"Pogo","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/pogo.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"pogo","active":true},{"channelId":"1745117673331","channelName":"Discovery Kids","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/discoverykids.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"discoverykids","active":true},{"channelId":"1745117714452","channelName":"Sony YAY","groupName":"Kids","logo":"http:\/\/172.19.178.178\/tv\/img\/sonyyay.png","sourceType":"Flussonic","serverId":"67ec6052b2a40","streamName":"sonyyay","active":true},{"channelId":"1745118544636","channelName":"Hum TV","groupName":"Foreign","logo":"http:\/\/172.19.178.178\/tv\/img\/humtv.png","sourceType":"Flussonic","serverId":"67ec50dd96550","streamName":"humtv","active":true},{"channelId":"1745118586484","channelName":"Hum Masala","groupName":"Foreign","logo":"http:\/\/172.19.178.178\/tv\/img\/hummasala.png","sourceType":"Flussonic","serverId":"67ec50dd96550","streamName":"hummasala","active":true},{"channelId":"1745118620733","channelName":"Hum Sitaray","groupName":"Foreign","logo":"http:\/\/172.19.178.178\/tv\/img\/humsitaray.png","sourceType":"Flussonic","serverId":"67ec50dd96550","streamName":"humsitaray","active":true},{"channelId":"1745119246399","channelName":"Sony SAB","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysab.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"sonysab","active":true},{"channelId":"1745119941130","channelName":"B4U Movies","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/b4umovies.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"b4umovies","active":true},{"channelId":"1745120121718","channelName":"Sony Max 2","groupName":"Hindi","logo":"http:\/\/172.19.178.178\/tv\/img\/sonymax2.png","sourceType":"Flussonic","serverId":"67ec7c69036c5","streamName":"sonymax2","active":true},{"channelId":"1745134806335","channelName":"BTV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/btv.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"btv","active":true},{"channelId":"1745144466579","channelName":"TLC","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/tlc.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"tlc","active":true},{"channelId":"1745144496905","channelName":"Animal Planet","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/animalplanet.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"animalplanet","active":true},{"channelId":"1745144517000","channelName":"Sony BBC Earth","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/sonybbcearth.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"sonybbcearth","active":true},{"channelId":"1745144550567","channelName":"Discovery Science","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/discoveryscience.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"discoveryscience","active":true},{"channelId":"1745144571388","channelName":"Discovery Turbo","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/discoveryturbo.png","sourceType":"Flussonic","serverId":"67ec53c1b4472","streamName":"discoveryturbo","active":true},{"channelId":"1745144594406","channelName":"Investigation Discovery","groupName":"Infotainment","logo":"http:\/\/172.19.178.178\/tv\/img\/investigationdiscovery.png","sourceType":"Flussonic","active":true,"serverId":"67ec53c1b4472","streamName":"investigationdiscovery"},{"channelId":"1749557720333","channelName":"T Sports","groupName":"CloudTV","logo":"http:\/\/172.19.178.178\/tv\/img\/tsports.png","sourceType":"Flussonic","serverId":"67e43c187e835","streamName":"CLOUD-TV-03","active":true},{"channelId":"1750694282730","channelName":"Sony Sports Ten 5","groupName":"CloudTV","logo":"http:\/\/172.19.178.178\/tv\/img\/sonysportsten5.png","sourceType":"Flussonic","serverId":"67e43c187e835","streamName":"CLOUD-TV-04","active":true},{"channelId":"1750694363017","channelName":"Star Sports 1","groupName":"CloudTV","logo":"http:\/\/172.19.178.178\/tv\/img\/starsports1.png","sourceType":"Flussonic","serverId":"67e43c187e835","streamName":"CLOUD-TV-05","active":true},{"channelId":"1743010891723","channelName":"A Sports","groupName":"CloudTV","logo":"http:\/\/172.19.178.178\/tv\/img\/asports.png","sourceType":"Flussonic","active":true,"serverId":"67e43c187e835","streamName":"CLOUD-TV-01"},{"channelId":"1751329034249","channelName":"Nagorik","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/nagorik.png","sourceType":"Flussonic","serverId":"67e456c5ae421","streamName":"nagorik","active":true},{"channelId":"1752456598095","channelName":"Fast Sports","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/fastsports.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"fastsports","active":true},{"channelId":"1752458128049","channelName":"Golf","groupName":"Sports","logo":"http:\/\/172.19.178.178\/tv\/img\/golf.png","sourceType":"Flussonic","serverId":"67e56025c2d4c","streamName":"golf","active":true},{"channelId":"1753033338939","channelName":"Willow 2","groupName":"CloudTV","logo":"http:\/\/172.19.178.178\/tv\/img\/willow2.png","sourceType":"Flussonic","active":true,"serverId":"67e43c187e835","streamName":"CLOUD-TV-02"},{"channelId":"174328513220","channelName":"Star Jalsha","groupName":"Indian Bangla","logo":"http:\/\/172.19.178.178\/tv\/img\/starjalsha.png","sourceType":"Flussonic","active":true,"serverId":"67e87b6509828","streamName":"starjalsha"},{"channelId":"1753095551469","channelName":"Jamuna TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/jamunatv.png","sourceType":"Flussonic","active":true,"serverId":"67e456c5ae421","streamName":"jamunatv"},{"channelId":"1753110240311","channelName":"test","groupName":"testbd","logo":"http:\/\/172.19.178.178\/tv\/img\/jamunatv.png","sourceType":"Flussonic","active":true,"serverId":"67e43c187e835","streamName":"ts"},{"channelId":"1753125561195","channelName":"Somoy TV","groupName":"Bangladeshi","logo":"http:\/\/172.19.178.178\/tv\/img\/somoytv.png","sourceType":"Flussonic","active":true,"serverId":"67e456c5ae421","streamName":"somoytv"}];
+    const itemsPerPage = 20;
+    let loadedCounts = {};
+    
+    // Format time remaining for display
+    function formatTimeRemaining(seconds) {
+        if (seconds < 60) {
+            return seconds + ' sec';
+        } else if (seconds < 3600) {
+            return Math.floor(seconds / 60) + ' min';
+        } else {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return hours + 'h ' + minutes + 'm';
+        }
+    }
+    
+    // Update countdown timers
+    function updateCountdowns() {
+        // Update upcoming event countdowns
+        document.querySelectorAll('.countdown').forEach(countdown => {
+            let timeToStart = parseInt(countdown.getAttribute('data-start')) - 1;
+            if (timeToStart <= 0) {
+                // Refresh the page when an event starts
+                window.location.reload();
+                return;
+            }
+            
+            countdown.setAttribute('data-start', timeToStart);
+            countdown.textContent = formatTimeRemaining(timeToStart);
+        });
+        
+        // Update live event remaining times
+        document.querySelectorAll('.time-remaining').forEach(timeRemaining => {
+            let timeToEnd = parseInt(timeRemaining.getAttribute('data-end')) - 1;
+            if (timeToEnd <= 0) {
+                // Refresh the page when an event ends
+                window.location.reload();
+                return;
+            }
+            
+            timeRemaining.setAttribute('data-end', timeToEnd);
+            timeRemaining.textContent = formatTimeRemaining(timeToEnd);
+        });
+    }
+    
+    // Start countdown timer updates
+    setInterval(updateCountdowns, 1000);
+
+    // Add smooth scrolling for anchor links
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all header navigation links
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+        
+        // Add click event listener to each link
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Only process links with hash
+                if (this.getAttribute('href').includes('#')) {
+                    const targetId = this.getAttribute('href').split('#')[1];
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        e.preventDefault();
+                        
+                        // Scroll smoothly to the target element
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80, // Offset for fixed header
+                            behavior: 'smooth'
+                        });
+                        
+                        // Update URL without reloading the page
+                        history.pushState(null, null, `#${targetId}`);
+                    }
+                }
+            });
+        });
+
+        // Add loading animation for images
+        const channelImages = document.querySelectorAll('.channel-card img');
+        
+        channelImages.forEach(img => {
+            // Add loading class
+            img.classList.add('loading');
+            
+            // Remove loading class when image is loaded
+            img.onload = function() {
+                this.classList.remove('loading');
+            };
+            
+            // Also handle error case
+            img.onerror = function() {
+                this.classList.remove('loading');
+                this.src = 'assets/default-channel.png';
+            };
+        });
+    });
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const container = document.getElementById('channelsContainer');
+        
+        if (query === '') {
+            // Reset to original view
+            window.location.href = 'index.php';
+            return;
+        }
+
+        // Search through ALL channels
+        const results = allChannels.filter(channel => 
+            (!channel.active || channel.active === true) &&
+            (channel.channelName.toLowerCase().includes(query) ||
+             channel.groupName.toLowerCase().includes(query))
+        );
+
+        // Group results by category
+        const groupedResults = {};
+        results.forEach(channel => {
+            if (!groupedResults[channel.groupName]) {
+                groupedResults[channel.groupName] = [];
+            }
+            groupedResults[channel.groupName].push(channel);
+        });
+
+        // Display results
+        container.innerHTML = '';
+        
+        if (Object.keys(groupedResults).length === 0) {
+            container.innerHTML = `
+                <div class="text-center mt-5">
+                    <h3 class="text-white">No channels found</h3>
+                    <p class="text-muted">Try a different search term</p>
+                </div>`;
+            return;
+        }
+
+        Object.entries(groupedResults).forEach(([category, channels]) => {
+            container.innerHTML += `
+                <div class="category-section mb-4" data-group="${category}">
+                    <h2 class="category-title">${category}</h2>
+                    <div class="channel-grid">
+                        ${channels.map(channel => `
+                            <a href="play.php?id=${channel.channelId}" class="channel-card text-decoration-none">
+                                <img src="${channel.logo}" 
+                                     alt="${channel.channelName}"
+                                     onerror="this.src='assets/default-channel.png'"
+                                     class="loading">
+                                <div class="channel-overlay">
+                                    <h3 class="channel-name">${channel.channelName}</h3>
+                                </div>
+                                <div class="play-button">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+    }));
+
+    // Load more functionality
+    function loadMoreChannels(category) {
+        loadedCounts[category] = loadedCounts[category] || itemsPerPage;
+        
+        const categoryChannels = allChannels.filter(ch => 
+            ch.groupName === category && 
+            (!ch.active || ch.active === true)
+        );
+        
+        const container = document.querySelector(`[data-group="${category}"] .channel-grid`);
+        const seeMoreBtn = document.querySelector(`[data-group="${category}"] .see-more-btn`);
+        
+        const nextChannels = categoryChannels.slice(loadedCounts[category], loadedCounts[category] + itemsPerPage);
+        
+        if (nextChannels.length > 0) {
+            const channelsHtml = nextChannels.map(channel => `
+                <a href="play.php?id=${channel.channelId}" class="channel-card text-decoration-none">
+                    <img src="${channel.logo}" 
+                         alt="${channel.channelName}"
+                         onerror="this.src='assets/default-channel.png'"
+                         class="loading">
+                    <div class="channel-overlay">
+                        <h3 class="channel-name">${channel.channelName}</h3>
+                    </div>
+                    <div class="play-button">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </a>
+            `).join('');
+            
+            container.insertAdjacentHTML('beforeend', channelsHtml);
+            loadedCounts[category] += nextChannels.length;
+            
+            if (loadedCounts[category] >= categoryChannels.length) {
+                seeMoreBtn.style.display = 'none';
+            }
+        }
+    }
+
+    // Debounce function to prevent too many search requests
+    function debounce(func, timeout = 300) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), timeout);
+        };
+    }
+    </script>
+
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --secondary: #e50914;
+            --dark: #1a1a1a;
+            --light: #f8f9fa;
+        }
+        
+
+        
+        .content {
+            flex: 1;
+            padding: 2rem;
+        }
+        
+        /* Modern Footer Styles */
+        .neo-footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .neo-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-column h3 {
+            color: var(--primary);
+            position: relative;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--secondary);
+            transition: width 0.3s ease;
+        }
+        
+        .footer-column:hover h3::after {
+            width: 80px;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column ul li a {
+            color: #ccc;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .footer-column ul li a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .newsletter-form {
+            margin-top: 20px;
+        }
+        
+        .newsletter-form input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .newsletter-form button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .newsletter-form button:hover {
+            background: var(--secondary);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .footer-bottom p {
+            margin: 0;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-column {
+                text-align: center;
+            }
+            
+            .footer-column h3::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .social-links {
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <footer class="neo-footer">
+        <div class="floating-shapes">
+            <div class="shape" style="width: 50px; height: 50px; background: var(--primary); left: 10%; animation-delay: 0s;"></div>
+            <div class="shape" style="width: 80px; height: 80px; background: var(--secondary); left: 25%; animation-delay: 2s;"></div>
+            <div class="shape" style="width: 30px; height: 30px; background: white; left: 50%; animation-delay: 4s;"></div>
+            <div class="shape" style="width: 60px; height: 60px; background: var(--primary); left: 70%; animation-delay: 6s;"></div>
+            <div class="shape" style="width: 40px; height: 40px; background: var(--secondary); left: 85%; animation-delay: 8s;"></div>
+        </div>
+        
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>Cloud TV</h3>
+                <p>Premium streaming service offering thousands of channels and on-demand content with the best quality and reliability.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Channels</a></li>
+                    <li><a href="#">Packages</a></li>
+                    <li><a href="#">Devices</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">System Status</a></li>
+                    <li><a href="#">Speed Test</a></li>
+                    <li><a href="#">Feedback</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Newsletter</h3>
+                <p>Subscribe to get updates on new channels and special offers.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; <script>document.write(new Date().getFullYear())</script> Cloud TV. All Rights Reserved.</p>
+            <div style="margin-top: 10px;">
+                <a href="https://hits.sh/172.19.178.180/">
+                    <img alt="Hits" src="https://hits.sh/172.19.178.180.svg?view=today-total&style=flat-square"/>
+                </a>
+            </div>
+        </div>
+    </footer>
+    
+  
+
+</body>
+</html>
+
